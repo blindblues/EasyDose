@@ -121,6 +121,10 @@
   const profileEmailEl = $('#profile-email');
   const btnLogout = $('#btn-logout');
   const modalProfileCancel = $('#modal-profile-cancel');
+  
+  const modalUsername = $('#modal-username');
+  const usernameInput = $('#input-username');
+  const btnSaveUsername = $('#btn-save-username');
 
   // ── Utilities ──
 
@@ -985,11 +989,91 @@
     // Questa funzione è ora integrata nel listener onAuthStateChange in init()
   }
 
+  async function checkUserProfile() {
+    if (!user || !supabase) return;
+
+    try {
+      // Cerchiamo il profilo nella tabella 'profiles'
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Errore recupero profilo:', error);
+        return;
+      }
+
+      if (!data || !data.username) {
+        // Nessun username? Apri il modal obbligatorio
+        openModal(modalUsername);
+      } else {
+        // Username presente? Aggiorna l'URL
+        updateAppUrl(data.username);
+        // Aggiorna anche il testo nel modal profilo
+        profileEmailEl.innerHTML = `${user.email}<br><span style="color:var(--blue-400)">@${data.username}</span>`;
+      }
+    } catch (err) {
+      console.error('Errore check profilo:', err);
+    }
+  }
+
+  async function saveUsername() {
+    const username = usernameInput.value.trim().toLowerCase();
+    
+    // Regola: solo lettere, numeri e underscore
+    const regex = /^[a-zA-Z0-9_]+$/;
+    if (!username || username.length < 3) {
+      showSnackbar('Username troppo corto (min 3 caratteri)');
+      return;
+    }
+    if (!regex.test(username)) {
+      showSnackbar('Usa solo lettere, numeri e underscore');
+      return;
+    }
+
+    // 1. Verifica se l'username è già preso
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', username)
+      .maybeSingle();
+
+    if (existing) {
+      showSnackbar('Questo username è già occupato!');
+      return;
+    }
+
+    // 2. Salva nel database
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ id: user.id, username, updated_at: new Date() });
+
+    if (error) {
+      showSnackbar('Errore durante il salvataggio');
+      console.error(error);
+    } else {
+      showSnackbar('Username salvato!');
+      closeModal(modalUsername);
+      updateAppUrl(username);
+      profileEmailEl.innerHTML = `${user.email}<br><span style="color:var(--blue-400)">@${username}</span>`;
+    }
+  }
+
+  function updateAppUrl(username) {
+    if (username) {
+      // Cambia l'URL in easydose.blindblues.com/username
+      window.history.pushState({ username }, '', '/' + username);
+    }
+  }
+
   btnAuthOpen.addEventListener('click', handleAuth);
   btnLogin.addEventListener('click', login);
   btnRegister.addEventListener('click', register);
   btnGoogle.addEventListener('click', loginWithGoogle);
   btnLogout.addEventListener('click', logout);
+  btnSaveUsername.addEventListener('click', saveUsername);
   $('#modal-auth-cancel').addEventListener('click', () => closeModal(modalAuth));
   modalProfileCancel.addEventListener('click', () => closeModal(modalProfile));
 
@@ -1011,6 +1095,9 @@
         
         await load();
         
+        // Verifica se l'utente ha un username impostato
+        await checkUserProfile();
+
         if (event === 'SIGNED_IN') {
           showSnackbar('Sessione attivata!');
           if (foods.length === 0) {
@@ -1020,6 +1107,8 @@
       } else {
         user = null;
         btnAuthOpen.classList.remove('logged-in');
+        // Rimuovi username dall'URL tornando alla home
+        window.history.pushState(null, '', '/');
         load();
         if (event === 'SIGNED_OUT') {
           showSnackbar('Sessione chiusa');

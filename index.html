@@ -254,6 +254,27 @@
     </div>
   </div>
 
+  <!-- USERNAME MODAL (For new users) -->
+  <div id="modal-username" class="modal-overlay" style="display:none;" role="dialog" data-noclose="true">
+    <div class="modal-card">
+      <h3 id="modal-username-title">Scegli il tuo Username</h3>
+      <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Crea un nome unico per il tuo profilo EasyDose.</p>
+      <div class="modal-body">
+        <div class="field">
+          <label for="input-username">Username</label>
+          <div class="input-with-prefix">
+            <span class="prefix">@</span>
+            <input type="text" id="input-username" placeholder="iltuonome" maxlength="20" autocomplete="off">
+          </div>
+          <small id="username-hint" style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">Solo lettere, numeri e underscore (_).</small>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="btn-save-username" style="width: 100%;">Conferma Username</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>

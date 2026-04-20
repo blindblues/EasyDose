@@ -671,6 +671,25 @@ body {
   pointer-events: none;
 }
 
+.input-with-prefix {
+  position: relative;
+}
+
+.input-with-prefix input {
+  padding-left: 32px;
+}
+
+.input-with-prefix .prefix {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--blue-400);
+  pointer-events: none;
+}
+
 .divider {
   height: 1px;
   background: var(--border-default);
