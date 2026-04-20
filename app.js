@@ -271,17 +271,28 @@
     foodListEl.innerHTML = '';
     const query = searchInput.value.toLowerCase();
 
-    // 1. Filtriamo i cibi
+    // 1. Calcola i tag attualmente disponibili nei cibi
+    const currentTags = new Set();
+    foods.forEach(f => {
+      const tags = Array.isArray(f.tags) ? f.tags : (f.tag ? [f.tag] : ['Generale']);
+      tags.forEach(t => currentTags.add(t));
+    });
+
+    // 2. Pulizia: rimuovi dai filtri attivi i tag che non esistono più
+    activeFilters = activeFilters.filter(tag => currentTags.has(tag));
+
+    // 3. Renderizza la barra dei filtri ora che activeFilters è pulito
+    renderFilterBar(Array.from(currentTags).sort());
+
+    // 4. Filtriamo i cibi
     let filtered = foods.filter(food => {
-      // Compatibilità: converte tag in tags se necessario
       const foodTags = Array.isArray(food.tags) ? food.tags : (food.tag ? [food.tag] : ['Generale']);
-      
       const matchesSearch = food.name.toLowerCase().includes(query);
       const matchesFilter = activeFilters.length === 0 || activeFilters.some(f => foodTags.includes(f));
       return matchesSearch && matchesFilter;
     });
 
-    // 2. Ordinamento (Selezionati in alto, poi alfabetico)
+    // 5. Ordinamento (Selezionati in alto, poi alfabetico)
     filtered.sort((a, b) => {
       const aSel = !!selectedFoods[a.id];
       const bSel = !!selectedFoods[b.id];
@@ -290,10 +301,7 @@
       return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
     });
 
-    // 3. Renderizzazione Barra Filtri
-    renderFilterBar();
-
-    // 4. Stati Vuoti
+    // 6. Stati Vuoti
     if (foods.length === 0) {
       $('#empty-state').style.display = 'block';
       noResultsState.style.display = 'none';
@@ -308,7 +316,7 @@
     $('#empty-state').style.display = 'none';
     noResultsState.style.display = 'none';
 
-    // 5. Lista Flat
+    // 7. Lista Flat
     const flatList = document.createElement('div');
     flatList.className = 'food-list-flat';
 
@@ -321,14 +329,7 @@
     updateDisplay();
   }
 
-  function renderFilterBar() {
-    const allTags = new Set();
-    foods.forEach(f => {
-      const tags = Array.isArray(f.tags) ? f.tags : (f.tag ? [f.tag] : ['Generale']);
-      tags.forEach(t => allTags.add(t));
-    });
-
-    const sortedTags = Array.from(allTags).sort();
+  function renderFilterBar(sortedTags) {
     filterBarEl.innerHTML = '';
 
     sortedTags.forEach(tag => {
