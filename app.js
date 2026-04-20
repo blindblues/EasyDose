@@ -1003,11 +1003,12 @@
     if (!user || !supabase) return;
 
     try {
-      // Puliamo l'URL dai frammenti di Supabase (#access_token ecc)
+      // 1. Puliamo frammenti hash Supabase
       if (window.location.hash && window.location.hash.includes('access_token')) {
         window.history.replaceState(null, '', window.location.pathname);
       }
 
+      // 2. Cerchiamo il profilo
       const { data } = await supabase
         .from('profiles')
         .select('username')
@@ -1018,7 +1019,13 @@
         openModal(modalUsername);
       } else {
         currentUsername = data.username;
-        updateAppUrl(data.username);
+        const currentPath = window.location.pathname.replace(/^\/|\/$/g, ''); // rimuove slash iniziali/finali
+        
+        // Se l'URL attuale non corrisponde allo username, o se siamo sulla home, forza il redirect
+        if (currentPath !== currentUsername) {
+          updateAppUrl(currentUsername);
+        }
+        
         profileEmailEl.innerHTML = `${user.email}<br><span style="color:var(--blue-400)">@${data.username}</span>`;
       }
     } catch (err) {
