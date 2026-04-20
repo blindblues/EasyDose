@@ -112,8 +112,15 @@
   const authPass = $('#auth-password');
   const btnLogin = $('#btn-login');
   const btnRegister = $('#btn-register');
+  const btnGoogle = $('#btn-google');
   const btnAuthOpen = $('#btn-auth');
   const modalAuthTitle = $('#modal-auth-title');
+  const modalAuthCancel = $('#modal-auth-cancel');
+  
+  const modalProfile = $('#modal-profile');
+  const profileEmailEl = $('#profile-email');
+  const btnLogout = $('#btn-logout');
+  const modalProfileCancel = $('#modal-profile-cancel');
 
   // ── Utilities ──
 
@@ -837,18 +844,26 @@
 
   // ── Auth Logic ──
 
-  async function handleAuth() {
+  function handleAuth() {
     if (user) {
-      // Logout
-      const { error } = await supabase.auth.signOut();
-      if (!error) {
-        user = null;
-        btnAuthOpen.classList.remove('logged-in');
-        showSnackbar('Sessione chiusa');
-        load(); // Ricarica dati locali
-      }
+      profileEmailEl.textContent = user.email;
+      openModal(modalProfile);
     } else {
       openModal(modalAuth);
+    }
+  }
+
+  async function logout() {
+    if (!supabase) return;
+    const { error } = await supabase.auth.signOut();
+    if (!error) {
+      user = null;
+      btnAuthOpen.classList.remove('logged-in');
+      closeModal(modalProfile);
+      showSnackbar('Sessione chiusa');
+      load(); // Ricarica dati locali per tornare allo stato offline
+    } else {
+      showSnackbar('Errore durante il logout');
     }
   }
 
@@ -878,6 +893,19 @@
     } else {
       showSnackbar('Controlla la tua email per confermare!');
       closeModal(modalAuth);
+    }
+  }
+
+  async function loginWithGoogle() {
+    if (!supabase) return;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+    if (error) {
+      showSnackbar('Errore Google: ' + error.message);
     }
   }
 
@@ -956,7 +984,10 @@
   btnAuthOpen.addEventListener('click', handleAuth);
   btnLogin.addEventListener('click', login);
   btnRegister.addEventListener('click', register);
+  btnGoogle.addEventListener('click', loginWithGoogle);
+  btnLogout.addEventListener('click', logout);
   $('#modal-auth-cancel').addEventListener('click', () => closeModal(modalAuth));
+  modalProfileCancel.addEventListener('click', () => closeModal(modalProfile));
 
   // ── Init ──
 
@@ -965,10 +996,15 @@
       const { data } = await supabase.auth.getSession();
       if (data?.session) {
         user = data.session.user;
-        btnAuthOpen.classList.add('logged-in');
+        // Se siamo appena tornati da un login (es. Google), eseguiamo onAuthSuccess
+        // altrimenti carichiamo normalmente
+        onAuthSuccess();
+      } else {
+        load();
       }
+    } else {
+      load();
     }
-    load();
 
     // Auto-correzione ID per salvataggio cloud sicuro
     let changed = false;

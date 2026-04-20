@@ -738,6 +738,94 @@ body {
   filter: brightness(1.1);
 }
 
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--white);
+  color: #1f1f1f;
+  border: 1px solid #dadce0;
+  padding: 10px 22px;
+  border-radius: var(--r-sm);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease-standard);
+}
+
+.btn-google:hover {
+  background: #f8f9fa;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border-color: #d2d4d7;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  margin: 4px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.auth-divider::before {
+  margin-right: 10px;
+}
+
+.auth-divider::after {
+  margin-left: 10px;
+}
+
+/* ── Profile info ── */
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.profile-avatar {
+  width: 54px;
+  height: 54px;
+  background: var(--blue-glow);
+  color: var(--blue-400);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar .material-icons-round {
+  font-size: 32px;
+}
+
+.profile-details {
+  flex: 1;
+}
+
+.profile-email {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.profile-status {
+  font-size: 12px;
+  color: #66BB6A;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
 /* ── Glucose result ── */
 #glucose-result-content {
   padding: 12px 0 0;
