@@ -126,6 +126,7 @@
   const modalUsername = $('#modal-username');
   const usernameInput = $('#input-username');
   const btnSaveUsername = $('#btn-save-username');
+  const btnEditUsername = $('#btn-edit-username');
 
   // ── Utilities ──
 
@@ -650,6 +651,12 @@
     if (e.target === modalFood) closeModal(modalFood);
   });
 
+  modalUsername.addEventListener('click', (e) => {
+    if (e.target === modalUsername && modalUsername.dataset.noclose !== "true") {
+      closeModal(modalUsername);
+    }
+  });
+
   modalFoodSave.addEventListener('click', () => {
     const name = foodNameInput.value.trim();
     const carbs = parseNum(foodCarbsInput.value);
@@ -1016,6 +1023,7 @@
         .maybeSingle();
 
       if (!data || !data.username) {
+        modalUsername.dataset.noclose = "true"; // Impediamo la chiusura se è obbligatorio
         openModal(modalUsername);
       } else {
         currentUsername = data.username;
@@ -1030,6 +1038,16 @@
       }
     } catch (err) {
       console.error('Errore check profilo:', err);
+    }
+  }
+
+  function openEditUsername() {
+    if (currentUsername) {
+      usernameInput.value = currentUsername;
+      modalUsername.dataset.noclose = "false"; // Permettiamo la chiusura se è una modifica volontaria
+      closeModal(modalProfile, () => {
+        openModal(modalUsername);
+      });
     }
   }
 
@@ -1089,6 +1107,7 @@
   btnGoogle.addEventListener('click', loginWithGoogle);
   btnLogout.addEventListener('click', logout);
   btnSaveUsername.addEventListener('click', saveUsername);
+  btnEditUsername.addEventListener('click', openEditUsername);
   
   if (modalAuthCancel) modalAuthCancel.addEventListener('click', () => closeModal(modalAuth));
   if (modalProfileCancel) modalProfileCancel.addEventListener('click', () => closeModal(modalProfile));
