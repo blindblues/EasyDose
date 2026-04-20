@@ -64,6 +64,7 @@
   let editingFoodId = null;
   let deletingFoodId = null;
   let activeFilters = [];       // array di stringhe (tag selezionati)
+  let currentUsername = null;   // cache username locale
 
   // ── DOM refs ──
   const $ = (sel) => document.querySelector(sel);
@@ -859,7 +860,11 @@
 
   function handleAuth() {
     if (user) {
-      profileEmailEl.textContent = user.email;
+      if (currentUsername) {
+        profileEmailEl.innerHTML = `${user.email}<br><span style="color:var(--blue-400)">@${currentUsername}</span>`;
+      } else {
+        profileEmailEl.textContent = user.email;
+      }
       openModal(modalProfile);
     } else {
       openModal(modalAuth);
@@ -1012,6 +1017,7 @@
       if (!data || !data.username) {
         openModal(modalUsername);
       } else {
+        currentUsername = data.username;
         updateAppUrl(data.username);
         profileEmailEl.innerHTML = `${user.email}<br><span style="color:var(--blue-400)">@${data.username}</span>`;
       }
@@ -1053,6 +1059,7 @@
       if (error) {
         showSnackbar('Errore: create la tabella profiles su Supabase!');
       } else {
+        currentUsername = username;
         showSnackbar('Username salvato!');
         closeModal(modalUsername);
         updateAppUrl(username);
