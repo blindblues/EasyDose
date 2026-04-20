@@ -853,18 +853,68 @@
     }
   }
 
-  async function logout() {
-    if (!supabase) return;
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-      user = null;
-      btnAuthOpen.classList.remove('logged-in');
-      closeModal(modalProfile);
-      showSnackbar('Sessione chiusa');
-      load(); // Ricarica dati locali per tornare allo stato offline
-    } else {
-      showSnackbar('Errore durante il logout');
     }
+  }
+
+  async function syncDefaultFoods() {
+    showSnackbar('Sincronizzazione lista predefinita...');
+    
+    const defaultFoods = [
+      { id: "def_1", name: "Arance", carbsPer100g: 7.8, defaultGrams: 200, tag: "Frutta" },
+      { id: "def_2", name: "Arachidi", carbsPer100g: 19.0, defaultGrams: 20, tag: "Snack" },
+      { id: "def_3", name: "Big Mac", carbsPer100g: 18.0, defaultGrams: 233, tag: "Junk Food" },
+      { id: "def_4", name: "Carote", carbsPer100g: 9.6, defaultGrams: 250, tag: "Verdura" },
+      { id: "def_5", name: "Ceci", carbsPer100g: 17.0, defaultGrams: 120, tag: "Generale" },
+      { id: "def_6", name: "Cetrioli", carbsPer100g: 3.6, defaultGrams: 250, tag: "Verdura" },
+      { id: "def_7", name: "Choco Krave", carbsPer100g: 69.0, defaultGrams: 50, tag: "Pasta/Pane" },
+      { id: "def_8", name: "Ciliegie", carbsPer100g: 16.1, defaultGrams: 100, tag: "Frutta" },
+      { id: "def_9", name: "Cioccolato Fondente 70%", carbsPer100g: 32.0, defaultGrams: 16.6, tag: "Snack" },
+      { id: "def_10", name: "Cornetto Algida", carbsPer100g: 32.0, defaultGrams: 75, tag: "Junk Food" },
+      { id: "def_11", name: "Double Chicken BBQ", carbsPer100g: 27.0, defaultGrams: 218, tag: "Junk Food" },
+      { id: "def_12", name: "Fagioli Borlotti", carbsPer100g: 9.8, defaultGrams: 46, tag: "Generale" },
+      { id: "def_13", name: "Fagioli Cannellini", carbsPer100g: 13.0, defaultGrams: 46, tag: "Generale" },
+      { id: "def_14", name: "Fette Biscottate Integrali", carbsPer100g: 67.0, defaultGrams: 14, tag: "Pasta/Pane" },
+      { id: "def_15", name: "Fragole", carbsPer100g: 7.7, defaultGrams: 100, tag: "Frutta" },
+      { id: "def_16", name: "Gallette Riso con Cioccolato", carbsPer100g: 62.0, defaultGrams: 100, tag: "Snack" },
+      { id: "def_17", name: "Kiwi", carbsPer100g: 14.7, defaultGrams: 60, tag: "Frutta" },
+      { id: "def_18", name: "Lamponi", carbsPer100g: 7.0, defaultGrams: 60, tag: "Frutta" },
+      { id: "def_19", name: "Latte", carbsPer100g: 4.9, defaultGrams: 200, tag: "Snack" },
+      { id: "def_20", name: "Lattughino", carbsPer100g: 2.2, defaultGrams: 125, tag: "Verdura" },
+      { id: "def_21", name: "Marmellata Albicocca", carbsPer100g: 45.0, defaultGrams: 14, tag: "Generale" },
+      { id: "def_22", name: "Maxibon", carbsPer100g: 38.0, defaultGrams: 96, tag: "Junk Food" },
+      { id: "def_23", name: "Mc Flurry Smarties", carbsPer100g: 33.0, defaultGrams: 181, tag: "Junk Food" },
+      { id: "def_24", name: "Mela", carbsPer100g: 13.0, defaultGrams: 240, tag: "Frutta" },
+      { id: "def_25", name: "Muesli", carbsPer100g: 64.0, defaultGrams: 80, tag: "Pasta/Pane" },
+      { id: "def_26", name: "Muffin", carbsPer100g: 53.0, defaultGrams: 300, tag: "Junk Food" },
+      { id: "def_27", name: "Panbauletto Cereali", carbsPer100g: 45.0, defaultGrams: 120, tag: "Pasta/Pane" },
+      { id: "def_28", name: "Pasta Integrale", carbsPer100g: 62.0, defaultGrams: 120, tag: "Pasta/Pane" },
+      { id: "def_29", name: "Patatine Grandi Mc", carbsPer100g: 21.0, defaultGrams: 257, tag: "Junk Food" },
+      { id: "def_30", name: "Patè di Tonno", carbsPer100g: 1.5, defaultGrams: 30, tag: "Secondi" },
+      { id: "def_31", name: "Pere", carbsPer100g: 10.0, defaultGrams: 150, tag: "Frutta" },
+      { id: "def_32", name: "Pesca Noce", carbsPer100g: 10.5, defaultGrams: 100, tag: "Frutta" },
+      { id: "def_33", name: "Piselli", carbsPer100g: 8.9, defaultGrams: 120, tag: "Verdura" },
+      { id: "def_34", name: "Pizza Capricciosa", carbsPer100g: 34.0, defaultGrams: 450, tag: "Pasta/Pane" },
+      { id: "def_35", name: "Pomodori Datterini", carbsPer100g: 3.6, defaultGrams: 200, tag: "Verdura" },
+      { id: "def_36", name: "Riso Integrale", carbsPer100g: 75.0, defaultGrams: 60, tag: "Pasta/Pane" },
+      { id: "def_37", name: "Rotolo Cioccolato", carbsPer100g: 54.0, defaultGrams: 300, tag: "Junk Food" },
+      { id: "def_38", name: "Semi di Lino", carbsPer100g: 13.0, defaultGrams: 10, tag: "Snack" },
+      { id: "def_39", name: "Wurstel con formaggio", carbsPer100g: 2.0, defaultGrams: 150, tag: "Secondi" },
+      { id: "def_40", name: "Yogurt Soia", carbsPer100g: 10.5, defaultGrams: 125, tag: "Snack" }
+    ];
+
+    const toInsert = defaultFoods.map(f => ({
+      id: f.id,
+      user_id: user.id,
+      name: f.name,
+      carbs_per_100g: f.carbsPer100g,
+      default_grams: f.defaultGrams,
+      tags: [f.tag]
+    }));
+
+    await supabase.from('foods').insert(toInsert);
+    foods = defaultFoods;
+    renderFoods();
+    showSnackbar('Dati sincronizzati con successo!');
   }
 
   async function login() {
@@ -876,109 +926,23 @@
     if (error) {
       showSnackbar('Errore: ' + error.message);
     } else {
-      user = data.user;
-      closeModal(modalAuth);
-      onAuthSuccess();
-    }
-  }
-
-  async function register() {
-    const email = authEmail.value;
-    const password = authPass.value;
-    if (!email || !password) return;
-
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) {
-      showSnackbar('Errore: ' + error.message);
-    } else {
-      showSnackbar('Controlla la tua email per confermare!');
+      // Nota: lo stato 'user' verrà aggiornato automaticamente dal listener in init()
       closeModal(modalAuth);
     }
   }
 
-  async function loginWithGoogle() {
+  async function logout() {
     if (!supabase) return;
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin
-      }
-    });
+    const { error } = await supabase.auth.signOut();
     if (error) {
-      showSnackbar('Errore Google: ' + error.message);
+      showSnackbar('Errore durante il logout');
+    } else {
+      closeModal(modalProfile);
     }
   }
 
   async function onAuthSuccess() {
-    btnAuthOpen.classList.add('logged-in');
-    showSnackbar(`Bentornato!`);
-    
-    // Caricamento dati dal cloud
-    await load();
-
-    // Se dopo il caricamento la lista cibi è vuota (utente nuovo), carichiamo i default
-    if (user && supabase && foods.length === 0) {
-      showSnackbar('Sincronizzazione lista predefinita...');
-      
-      const defaultFoods = [
-        { id: "def_1", name: "Arance", carbsPer100g: 7.8, defaultGrams: 200, tag: "Frutta" },
-        { id: "def_2", name: "Arachidi", carbsPer100g: 19.0, defaultGrams: 20, tag: "Snack" },
-        { id: "def_3", name: "Big Mac", carbsPer100g: 18.0, defaultGrams: 233, tag: "Junk Food" },
-        { id: "def_4", name: "Carote", carbsPer100g: 9.6, defaultGrams: 250, tag: "Verdura" },
-        { id: "def_5", name: "Ceci", carbsPer100g: 17.0, defaultGrams: 120, tag: "Generale" },
-        { id: "def_6", name: "Cetrioli", carbsPer100g: 3.6, defaultGrams: 250, tag: "Verdura" },
-        { id: "def_7", name: "Choco Krave", carbsPer100g: 69.0, defaultGrams: 50, tag: "Pasta/Pane" },
-        { id: "def_8", name: "Ciliegie", carbsPer100g: 16.1, defaultGrams: 100, tag: "Frutta" },
-        { id: "def_9", name: "Cioccolato Fondente 70%", carbsPer100g: 32.0, defaultGrams: 16.6, tag: "Snack" },
-        { id: "def_10", name: "Cornetto Algida", carbsPer100g: 32.0, defaultGrams: 75, tag: "Junk Food" },
-        { id: "def_11", name: "Double Chicken BBQ", carbsPer100g: 27.0, defaultGrams: 218, tag: "Junk Food" },
-        { id: "def_12", name: "Fagioli Borlotti", carbsPer100g: 9.8, defaultGrams: 46, tag: "Generale" },
-        { id: "def_13", name: "Fagioli Cannellini", carbsPer100g: 13.0, defaultGrams: 46, tag: "Generale" },
-        { id: "def_14", name: "Fette Biscottate Integrali", carbsPer100g: 67.0, defaultGrams: 14, tag: "Pasta/Pane" },
-        { id: "def_15", name: "Fragole", carbsPer100g: 7.7, defaultGrams: 100, tag: "Frutta" },
-        { id: "def_16", name: "Gallette Riso con Cioccolato", carbsPer100g: 62.0, defaultGrams: 100, tag: "Snack" },
-        { id: "def_17", name: "Kiwi", carbsPer100g: 14.7, defaultGrams: 60, tag: "Frutta" },
-        { id: "def_18", name: "Lamponi", carbsPer100g: 7.0, defaultGrams: 60, tag: "Frutta" },
-        { id: "def_19", name: "Latte", carbsPer100g: 4.9, defaultGrams: 200, tag: "Snack" },
-        { id: "def_20", name: "Lattughino", carbsPer100g: 2.2, defaultGrams: 125, tag: "Verdura" },
-        { id: "def_21", name: "Marmellata Albicocca", carbsPer100g: 45.0, defaultGrams: 14, tag: "Generale" },
-        { id: "def_22", name: "Maxibon", carbsPer100g: 38.0, defaultGrams: 96, tag: "Junk Food" },
-        { id: "def_23", name: "Mc Flurry Smarties", carbsPer100g: 33.0, defaultGrams: 181, tag: "Junk Food" },
-        { id: "def_24", name: "Mela", carbsPer100g: 13.0, defaultGrams: 240, tag: "Frutta" },
-        { id: "def_25", name: "Muesli", carbsPer100g: 64.0, defaultGrams: 80, tag: "Pasta/Pane" },
-        { id: "def_26", name: "Muffin", carbsPer100g: 53.0, defaultGrams: 300, tag: "Junk Food" },
-        { id: "def_27", name: "Panbauletto Cereali", carbsPer100g: 45.0, defaultGrams: 120, tag: "Pasta/Pane" },
-        { id: "def_28", name: "Pasta Integrale", carbsPer100g: 62.0, defaultGrams: 120, tag: "Pasta/Pane" },
-        { id: "def_29", name: "Patatine Grandi Mc", carbsPer100g: 21.0, defaultGrams: 257, tag: "Junk Food" },
-        { id: "def_30", name: "Patè di Tonno", carbsPer100g: 1.5, defaultGrams: 30, tag: "Secondi" },
-        { id: "def_31", name: "Pere", carbsPer100g: 10.0, defaultGrams: 150, tag: "Frutta" },
-        { id: "def_32", name: "Pesca Noce", carbsPer100g: 10.5, defaultGrams: 100, tag: "Frutta" },
-        { id: "def_33", name: "Piselli", carbsPer100g: 8.9, defaultGrams: 120, tag: "Verdura" },
-        { id: "def_34", name: "Pizza Capricciosa", carbsPer100g: 34.0, defaultGrams: 450, tag: "Pasta/Pane" },
-        { id: "def_35", name: "Pomodori Datterini", carbsPer100g: 3.6, defaultGrams: 200, tag: "Verdura" },
-        { id: "def_36", name: "Riso Integrale", carbsPer100g: 75.0, defaultGrams: 60, tag: "Pasta/Pane" },
-        { id: "def_37", name: "Rotolo Cioccolato", carbsPer100g: 54.0, defaultGrams: 300, tag: "Junk Food" },
-        { id: "def_38", name: "Semi di Lino", carbsPer100g: 13.0, defaultGrams: 10, tag: "Snack" },
-        { id: "def_39", name: "Wurstel con formaggio", carbsPer100g: 2.0, defaultGrams: 150, tag: "Secondi" },
-        { id: "def_40", name: "Yogurt Soia", carbsPer100g: 10.5, defaultGrams: 125, tag: "Snack" }
-      ];
-
-
-      // Inseriamo massivamente nel cloud
-      const toInsert = defaultFoods.map(f => ({
-        id: f.id,
-        user_id: user.id,
-        name: f.name,
-        carbs_per_100g: f.carbsPer100g,
-        default_grams: f.defaultGrams,
-        tags: [f.tag] // Inizializza con l'unico tag predefinito
-      }));
-
-      await supabase.from('foods').insert(toInsert);
-      foods = defaultFoods;
-      renderFoods();
-      showSnackbar('Dati sincronizzati con successo!');
-    }
+    // Questa funzione è ora integrata nel listener onAuthStateChange in init()
   }
 
   btnAuthOpen.addEventListener('click', handleAuth);
@@ -989,27 +953,43 @@
   $('#modal-auth-cancel').addEventListener('click', () => closeModal(modalAuth));
   modalProfileCancel.addEventListener('click', () => closeModal(modalProfile));
 
-  // ── Init ──
-
-  async function init() {
-    if (supabase) {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session) {
-        user = data.session.user;
-        // Se siamo appena tornati da un login (es. Google), eseguiamo onAuthSuccess
-        // altrimenti carichiamo normalmente
-        onAuthSuccess();
-      } else {
-        load();
-      }
-    } else {
+  // ── Init & Auth Listener ──
+  
+  function init() {
+    if (!supabase) {
       load();
+      return;
     }
+
+    // Usiamo onAuthStateChange perché è molto più affidabile su mobile
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth Event:', event);
+      
+      if (session) {
+        user = session.user;
+        btnAuthOpen.classList.add('logged-in');
+        
+        await load();
+        
+        if (event === 'SIGNED_IN') {
+          showSnackbar('Sessione attivata!');
+          if (foods.length === 0) {
+            syncDefaultFoods();
+          }
+        }
+      } else {
+        user = null;
+        btnAuthOpen.classList.remove('logged-in');
+        load();
+        if (event === 'SIGNED_OUT') {
+          showSnackbar('Sessione chiusa');
+        }
+      }
+    });
 
     // Auto-correzione ID per salvataggio cloud sicuro
     let changed = false;
     foods = foods.map(f => {
-      // Se l'ID è un semplice numero (1-40), trasformalo in def_N
       if (!isNaN(f.id) && parseInt(f.id) >= 1 && parseInt(f.id) <= 40) {
         f.id = 'def_' + f.id;
         changed = true;
