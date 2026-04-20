@@ -1045,10 +1045,15 @@
       return;
     }
 
-    // 2. Salva nel database
+    // 2. Salva nel database (collegando esplicitamente email e id)
     const { error } = await supabase
       .from('profiles')
-      .upsert({ id: user.id, username, updated_at: new Date() });
+      .upsert({ 
+        id: user.id, 
+        username, 
+        email: user.email, // Salviamo l'email per un collegamento diretto
+        updated_at: new Date() 
+      });
 
     if (error) {
       showSnackbar('Errore durante il salvataggio');
