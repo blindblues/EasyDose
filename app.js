@@ -986,19 +986,19 @@
   }
 
   async function onAuthSuccess() {
-    // Questa funzione è ora integrata nel listener onAuthStateChange in init()
+    // Caricamento dati dal cloud (indipendente dall'username per ora)
+    await load();
   }
 
   async function checkUserProfile() {
     if (!user || !supabase) return;
 
     try {
-      // Puliamo l'URL dai frammenti di Supabase (access_token, ecc) se presenti
-      if (window.location.hash) {
+      // Puliamo l'URL dai frammenti di Supabase (#access_token ecc)
+      if (window.location.hash && window.location.hash.includes('access_token')) {
         window.history.replaceState(null, '', window.location.pathname);
       }
 
-      // Cerchiamo il profilo nella tabella 'profiles'
       const { data, error } = await supabase
         .from('profiles')
         .select('username')
@@ -1006,25 +1006,22 @@
         .maybeSingle();
 
       if (!data || !data.username) {
-        // Se non c'è il dato o c'è un errore (es. tabella mancante), mostriamo il modal
         openModal(modalUsername);
       } else {
-        // Username presente? Aggiorna l'URL
         updateAppUrl(data.username);
         profileEmailEl.innerHTML = `${user.email}<br><span style="color:var(--blue-400)">@${data.username}</span>`;
       }
     } catch (err) {
       console.error('Errore check profilo:', err);
-      // In caso di errore critico, apriamo comunque il modal per sicurezza
-      openModal(modalUsername);
+      // Non blocchiamo l'app, il modal si aprirà se necessario
+      if (modalUsername) openModal(modalUsername);
     }
   }
 
   async function saveUsername() {
     const username = usernameInput.value.trim().toLowerCase();
-    
-    // Regola: solo lettere, numeri e underscore
     const regex = /^[a-zA-Z0-9_]+$/;
+    
     if (!username || username.length < 3) {
       showSnackbar('Username troppo corto (min 3 caratteri)');
       return;
@@ -1034,36 +1031,34 @@
       return;
     }
 
-    // 1. Verifica se l'username è già preso
-    const { data: existing } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('username', username)
-      .maybeSingle();
+    try {
+      // 1. Verifica unicità
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle();
 
-    if (existing) {
-      showSnackbar('Questo username è già occupato!');
-      return;
-    }
+      if (existing) {
+        showSnackbar('Questo username è già occupato!');
+        return;
+      }
 
-    // 2. Salva nel database (collegando esplicitamente email e id)
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({ 
-        id: user.id, 
-        username, 
-        email: user.email, // Salviamo l'email per un collegamento diretto
-        updated_at: new Date() 
-      });
+      // 2. Salva
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, username, email: user.email, updated_at: new Date() });
 
-    if (error) {
-      showSnackbar('Errore durante il salvataggio');
-      console.error(error);
-    } else {
-      showSnackbar('Username salvato!');
-      closeModal(modalUsername);
-      updateAppUrl(username);
-      profileEmailEl.innerHTML = `${user.email}<br><span style="color:var(--blue-400)">@${username}</span>`;
+      if (error) {
+        showSnackbar('Errore salvataggio: ' + error.message);
+      } else {
+        showSnackbar('Username salvato!');
+        closeModal(modalUsername);
+        updateAppUrl(username);
+        profileEmailEl.innerHTML = `${user.email}<br><span style="color:var(--blue-400)">@${username}</span>`;
+      }
+    } catch (err) {
+      showSnackbar('Errore durante la comunicazione con il server');
     }
   }
 
