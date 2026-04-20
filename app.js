@@ -993,29 +993,30 @@
     if (!user || !supabase) return;
 
     try {
+      // Puliamo l'URL dai frammenti di Supabase (access_token, ecc) se presenti
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+
       // Cerchiamo il profilo nella tabella 'profiles'
       const { data, error } = await supabase
         .from('profiles')
         .select('username')
         .eq('id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
-        console.error('Errore recupero profilo:', error);
-        return;
-      }
+        .maybeSingle();
 
       if (!data || !data.username) {
-        // Nessun username? Apri il modal obbligatorio
+        // Se non c'è il dato o c'è un errore (es. tabella mancante), mostriamo il modal
         openModal(modalUsername);
       } else {
         // Username presente? Aggiorna l'URL
         updateAppUrl(data.username);
-        // Aggiorna anche il testo nel modal profilo
         profileEmailEl.innerHTML = `${user.email}<br><span style="color:var(--blue-400)">@${data.username}</span>`;
       }
     } catch (err) {
       console.error('Errore check profilo:', err);
+      // In caso di errore critico, apriamo comunque il modal per sicurezza
+      openModal(modalUsername);
     }
   }
 
