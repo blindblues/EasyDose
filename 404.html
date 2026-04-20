@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="EasyDose – Calcolatore insulina semplice e veloce. Calcola le unità di insulina in base ai carboidrati e alla glicemia.">
+  <meta name="theme-color" content="#0f1117">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>EasyDose – Calcolatore Insulina</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="sections.css">
+</head>
+<body>
+  <!-- ═══════════════════ APP SHELL ═══════════════════ -->
+  <div id="app">
+
+    <!-- HEADER -->
+    <header id="app-header">
+      <h1>EasyDose</h1>
+      <div class="header-actions">
+        <button id="btn-auth" class="icon-btn" aria-label="Account" title="Accedi">
+          <span class="material-icons-round">account_circle</span>
+        </button>
+        <button id="btn-settings" class="icon-btn" aria-label="Impostazioni" title="Impostazioni">
+          <span class="material-icons-round">settings</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- HERO – insulin display -->
+    <section id="hero">
+      <div id="hero-bg"></div>
+      <div id="hero-content">
+        <div id="insulin-display">
+          <span id="insulin-value">0.00</span>
+          <span id="insulin-unit">u</span>
+        </div>
+        <div id="carbs-badge">
+          <span>Carboidrati totali: </span>
+          <span id="total-carbs">0.0</span>
+          <span> g</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOD LIST -->
+    <section id="food-section">
+      <h2 id="food-section-title">I tuoi cibi</h2>
+
+      <div id="search-box">
+        <span class="material-icons-round search-icon">search</span>
+        <input type="text" id="search-input" placeholder="Cerca un cibo..." autocomplete="off">
+        <button id="search-clear" class="icon-btn" aria-label="Cancella ricerca" style="display: none; color: var(--text-muted); padding: 4px;">
+          <span class="material-icons-round" style="font-size: 20px;">close</span>
+        </button>
+      </div>
+
+      <div id="filter-bar"></div>
+
+      <div id="food-list">
+        <!-- populated by JS -->
+      </div>
+
+      <div id="empty-state" class="empty-state" style="display:none;">
+        <span class="material-icons-round empty-icon">restaurant_menu</span>
+        <p class="empty-title">Nessun cibo salvato</p>
+        <p class="empty-sub">Aggiungi uno con il pulsante +</p>
+      </div>
+
+      <div id="no-results-state" class="empty-state" style="display:none;">
+        <span class="material-icons-round empty-icon">search_off</span>
+        <p class="empty-title" id="no-results-text">Nessun cibo trovato</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- FABs -->
+  <div id="fab-container">
+    <button id="fab-glucose" class="fab fab-secondary" aria-label="Calcola supplemento glicemia" title="Calcola supplemento glicemia">
+      <span class="material-icons-round">bloodtype</span>
+    </button>
+    <button id="fab-add" class="fab fab-primary" aria-label="Aggiungi cibo" title="Aggiungi cibo">
+      <span class="material-icons-round">add</span>
+    </button>
+  </div>
+
+  <!-- ═══════════════ MODALS ═══════════════ -->
+
+  <!-- MODAL: Add / Edit food -->
+  <div id="modal-food" class="modal-overlay" style="display:none;" role="dialog" aria-labelledby="modal-food-title">
+    <div class="modal-card">
+      <h3 id="modal-food-title">Aggiungi Nuovo Cibo</h3>
+      <div class="modal-body">
+        <div class="field">
+          <label for="food-name">Nome del cibo</label>
+          <input type="text" id="food-name" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="food-grams">Grammi da mangiare</label>
+          <div class="input-with-suffix">
+            <input type="number" id="food-grams" value="100" min="0" step="any" inputmode="decimal">
+            <span class="suffix">g</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="food-carbs">Carboidrati per 100g</label>
+          <div class="input-with-suffix">
+            <input type="number" id="food-carbs" min="0" step="any" inputmode="decimal">
+            <span class="suffix">g</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Tag / Categorie</label>
+          <div class="custom-select-container">
+            <div id="tag-dropdown-btn" class="custom-select-trigger">
+              <span id="tag-dropdown-label">Seleziona Tag...</span>
+              <span class="material-icons-round">expand_more</span>
+            </div>
+            <div id="tag-dropdown-content" class="custom-select-content" style="display: none;">
+              <div id="tag-checklist" class="tag-checklist-dropdown">
+                <!-- Checkbox inserite da JS -->
+              </div>
+              <div class="tag-dropdown-add">
+                <button type="button" id="btn-add-tag-modal" class="btn-add-tag-inline">
+                  <span class="material-icons-round">add</span> Aggiungi Nuovo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-text" id="modal-food-cancel">Annulla</button>
+        <button class="btn-primary" id="modal-food-save">Aggiungi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Settings -->
+  <div id="modal-settings" class="modal-overlay" style="display:none;" role="dialog" aria-labelledby="modal-settings-title">
+    <div class="modal-card">
+      <h3 id="modal-settings-title">Impostazioni</h3>
+      <div class="modal-body">
+        <div class="field">
+          <label for="setting-carbs">Carboidrati per unità insulina</label>
+          <div class="input-with-suffix">
+            <input type="number" id="setting-carbs" min="0" step="any" inputmode="decimal">
+            <span class="suffix">g</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="setting-sensitivity">Sensibilità</label>
+          <input type="number" id="setting-sensitivity" min="0" step="any" inputmode="decimal">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-text" id="modal-settings-cancel">Annulla</button>
+        <button class="btn-primary" id="modal-settings-save">Salva</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Blood glucose -->
+  <div id="modal-glucose" class="modal-overlay" style="display:none;" role="dialog" aria-labelledby="modal-glucose-title">
+    <div class="modal-card">
+      <h3 id="modal-glucose-title">Inserisci Glicemia</h3>
+      <div class="modal-body">
+        <div class="field">
+          <label for="glucose-value">Glicemia</label>
+          <div class="input-with-suffix">
+            <input type="number" id="glucose-value" min="0" step="any" inputmode="decimal">
+            <span class="suffix">mg/dL</span>
+          </div>
+        </div>
+        <div id="glucose-result" style="display:none;">
+          <div class="divider"></div>
+          <div id="glucose-result-content"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-text" id="modal-glucose-cancel">Annulla</button>
+        <button class="btn-primary" id="modal-glucose-ok" style="display:none;">Ok</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Confirm delete -->
+  <div id="modal-delete" class="modal-overlay" style="display:none;" role="dialog" aria-labelledby="modal-delete-title">
+    <div class="modal-card modal-card-small">
+      <h3 id="modal-delete-title">Conferma cancellazione</h3>
+      <p id="modal-delete-text" class="modal-body"></p>
+      <div class="modal-actions">
+        <button class="btn-text" id="modal-delete-cancel">Annulla</button>
+        <button class="btn-danger" id="modal-delete-confirm">Elimina</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SNACKBAR -->
+  <div id="snackbar" class="snackbar" aria-live="polite"></div>
+
+  <!-- AUTH MODAL (Simple Login/Register) -->
+  <div id="modal-auth" class="modal-overlay" style="display:none;" role="dialog">
+    <div class="modal-card">
+      <h3 id="modal-auth-title">Accedi a EasyDose</h3>
+      <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">I tuoi dati verranno salvati nel cloud e sincronizzati su ogni dispositivo.</p>
+      <div class="modal-body">
+        <div class="field">
+          <label for="auth-email">Email</label>
+          <input type="email" id="auth-email" placeholder="example@email.com">
+        </div>
+        <div class="field">
+          <label for="auth-password">Password</label>
+          <input type="password" id="auth-password" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="modal-actions" style="flex-direction: column; gap: 0.5rem;">
+        <button class="btn-primary" id="btn-login" style="width: 100%;">Accedi</button>
+        <div class="auth-divider">oppure</div>
+        <button class="btn-google" id="btn-google" style="width: 100%;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" width="18" height="18">
+          Accedi con Google
+        </button>
+        <button class="btn-text" id="btn-register" style="width: 100%; font-size: 0.8rem;">Non hai un account? Registrati</button>
+        <button class="btn-text" id="modal-auth-cancel">Annulla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE MODAL (Shown when logged in) -->
+  <div id="modal-profile" class="modal-overlay" style="display:none;" role="dialog">
+    <div class="modal-card">
+      <h3 id="modal-profile-title">Il tuo Profilo</h3>
+      <div class="modal-body">
+        <div class="profile-info">
+          <div class="profile-avatar">
+            <span class="material-icons-round">account_circle</span>
+          </div>
+          <div class="profile-details">
+            <p id="profile-email" class="profile-email"></p>
+            <p id="profile-status" class="profile-status">Account sincronizzato</p>
+            <button id="btn-edit-username" class="btn-edit-profile">
+              <span class="material-icons-round">edit</span>
+              Cambia Username
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="flex-direction: column; gap: 0.5rem;">
+        <button class="btn-danger" id="btn-logout" style="width: 100%;">Esci da EasyDose</button>
+        <button class="btn-text" id="modal-profile-cancel">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERNAME MODAL (For new users) -->
+  <div id="modal-username" class="modal-overlay" style="display:none;" role="dialog" data-noclose="true">
+    <div class="modal-card">
+      <h3 id="modal-username-title">Scegli il tuo Username</h3>
+      <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Crea un nome unico per il tuo profilo EasyDose.</p>
+      <div class="modal-body">
+        <div class="field">
+          <label for="input-username">Username</label>
+          <div class="input-with-prefix">
+            <span class="prefix">@</span>
+            <input type="text" id="input-username" placeholder="iltuonome" maxlength="20" autocomplete="off">
+          </div>
+          <small id="username-hint" style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">Solo lettere, numeri e underscore (_).</small>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="btn-save-username" style="width: 100%;">Conferma Username</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
