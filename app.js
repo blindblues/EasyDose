@@ -271,28 +271,32 @@
     foodListEl.innerHTML = '';
     const query = searchInput.value.toLowerCase();
 
-    // 1. Calcola i tag attualmente disponibili nei cibi
+    // 1. Calcola i tag attualmente ESISTENTI nei cibi
     const currentTags = new Set();
     foods.forEach(f => {
       const tags = Array.isArray(f.tags) ? f.tags : (f.tag ? [f.tag] : ['Generale']);
       tags.forEach(t => currentTags.add(t));
     });
 
-    // 2. Pulizia: rimuovi dai filtri attivi i tag che non esistono più
+    // 2. Pulizia FORZATA: se un filtro attivo non esiste più tra i tag correnti, eliminalo
     activeFilters = activeFilters.filter(tag => currentTags.has(tag));
 
-    // 3. Renderizza la barra dei filtri ora che activeFilters è pulito
-    renderFilterBar(Array.from(currentTags).sort());
+    // 3. Renderizza la barra filtri (passando i tag ordinati)
+    const sortedTags = Array.from(currentTags).sort();
+    renderFilterBar(sortedTags);
 
-    // 4. Filtriamo i cibi
+    // 4. Filtriamo i cibi (usando i filtri appena puliti)
     let filtered = foods.filter(food => {
       const foodTags = Array.isArray(food.tags) ? food.tags : (food.tag ? [food.tag] : ['Generale']);
       const matchesSearch = food.name.toLowerCase().includes(query);
+      
+      // Se non ci sono filtri attivi, mostra tutto. Altrimenti, deve avere almeno uno dei tag selezionati.
       const matchesFilter = activeFilters.length === 0 || activeFilters.some(f => foodTags.includes(f));
+      
       return matchesSearch && matchesFilter;
     });
 
-    // 5. Ordinamento (Selezionati in alto, poi alfabetico)
+    // 5. Ordinamento
     filtered.sort((a, b) => {
       const aSel = !!selectedFoods[a.id];
       const bSel = !!selectedFoods[b.id];
@@ -334,15 +338,19 @@
 
     sortedTags.forEach(tag => {
       const chip = document.createElement('div');
-      chip.className = `filter-chip ${activeFilters.includes(tag) ? 'active' : ''}`;
+      // Usiamo una classe 'active' per indicare se il filtro è applicato
+      const isActive = activeFilters.includes(tag);
+      chip.className = `filter-chip ${isActive ? 'active' : ''}`;
       chip.textContent = tag;
-      chip.addEventListener('click', () => {
+      
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (activeFilters.includes(tag)) {
           activeFilters = activeFilters.filter(f => f !== tag);
         } else {
           activeFilters.push(tag);
         }
-        renderFoods();
+        renderFoods(); // Riesegue tutto inclusa la pulizia e il render della lista
       });
       filterBarEl.appendChild(chip);
     });
