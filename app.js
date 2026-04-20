@@ -853,6 +853,37 @@
     }
   }
 
+  async function register() {
+    const email = authEmail.value;
+    const password = authPass.value;
+    if (!email || !password) return;
+
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      showSnackbar('Errore: ' + error.message);
+    } else {
+      showSnackbar('Controlla la tua email per confermare!');
+      closeModal(modalAuth);
+    }
+  }
+
+  async function loginWithGoogle() {
+    if (!supabase) return;
+    
+    // Forza il redirect verso il dominio di produzione se non siamo in localhost
+    const redirectUrl = window.location.hostname === 'localhost' 
+      ? window.location.origin 
+      : 'https://easydose.blindblues.com';
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl
+      }
+    });
+
+    if (error) {
+      showSnackbar('Errore Google: ' + error.message);
     }
   }
 
