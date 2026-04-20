@@ -986,8 +986,12 @@
   }
 
   async function onAuthSuccess() {
-    // Caricamento dati dal cloud (indipendente dall'username per ora)
-    await load();
+    // Caricamento dati dal cloud
+    try {
+      await load();
+    } catch (e) {
+      console.warn("Sync cloud fallito, uso dati locali.");
+    }
   }
 
   async function checkUserProfile() {
@@ -999,7 +1003,7 @@
         window.history.replaceState(null, '', window.location.pathname);
       }
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('username')
         .eq('id', user.id)
@@ -1013,8 +1017,6 @@
       }
     } catch (err) {
       console.error('Errore check profilo:', err);
-      // Non blocchiamo l'app, il modal si aprirà se necessario
-      if (modalUsername) openModal(modalUsername);
     }
   }
 
@@ -1032,7 +1034,7 @@
     }
 
     try {
-      // 1. Verifica unicità
+      showSnackbar('Verifica disponibilità...');
       const { data: existing } = await supabase
         .from('profiles')
         .select('username')
@@ -1040,17 +1042,16 @@
         .maybeSingle();
 
       if (existing) {
-        showSnackbar('Questo username è già occupato!');
+        showSnackbar('Username già occupato!');
         return;
       }
 
-      // 2. Salva
       const { error } = await supabase
         .from('profiles')
         .upsert({ id: user.id, username, email: user.email, updated_at: new Date() });
 
       if (error) {
-        showSnackbar('Errore salvataggio: ' + error.message);
+        showSnackbar('Errore: create la tabella profiles su Supabase!');
       } else {
         showSnackbar('Username salvato!');
         closeModal(modalUsername);
@@ -1058,13 +1059,12 @@
         profileEmailEl.innerHTML = `${user.email}<br><span style="color:var(--blue-400)">@${username}</span>`;
       }
     } catch (err) {
-      showSnackbar('Errore durante la comunicazione con il server');
+      showSnackbar('Errore di rete');
     }
   }
 
   function updateAppUrl(username) {
     if (username) {
-      // Cambia l'URL in easydose.blindblues.com/username
       window.history.pushState({ username }, '', '/' + username);
     }
   }
@@ -1075,49 +1075,43 @@
   btnGoogle.addEventListener('click', loginWithGoogle);
   btnLogout.addEventListener('click', logout);
   btnSaveUsername.addEventListener('click', saveUsername);
-  $('#modal-auth-cancel').addEventListener('click', () => closeModal(modalAuth));
-  modalProfileCancel.addEventListener('click', () => closeModal(modalProfile));
+  
+  if (modalAuthCancel) modalAuthCancel.addEventListener('click', () => closeModal(modalAuth));
+  if (modalProfileCancel) modalProfileCancel.addEventListener('click', () => closeModal(modalProfile));
 
   // ── Init & Auth Listener ──
   
   function init() {
-    if (!supabase) {
-      load();
-      return;
-    }
+    // 1. Carica subito i dati locali per mostrare i cibi immediatamente
+    load();
 
-    // Usiamo onAuthStateChange perché è molto più affidabile su mobile
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth Event:', event);
+    if (!supabase) return;
+
+    // 2. Ascolta i cambiamenti di stato auth
+    supabase.auth.onAuthStateChange((event, session) => {
+      console.log('EasyDose Auth:', event);
       
       if (session) {
         user = session.user;
         btnAuthOpen.classList.add('logged-in');
         
-        await load();
-        
-        // Verifica se l'utente ha un username impostato
-        await checkUserProfile();
+        // Sincronizza con il cloud senza bloccare l'UI
+        load().then(() => {
+          if (foods.length === 0) syncDefaultFoods();
+          checkUserProfile();
+        });
 
-        if (event === 'SIGNED_IN') {
-          showSnackbar('Sessione attivata!');
-          if (foods.length === 0) {
-            syncDefaultFoods();
-          }
-        }
+        if (event === 'SIGNED_IN') showSnackbar('Bentornato!');
       } else {
         user = null;
         btnAuthOpen.classList.remove('logged-in');
-        // Rimuovi username dall'URL tornando alla home
         window.history.pushState(null, '', '/');
         load();
-        if (event === 'SIGNED_OUT') {
-          showSnackbar('Sessione chiusa');
-        }
+        if (event === 'SIGNED_OUT') showSnackbar('Sessione chiusa');
       }
     });
 
-    // Auto-correzione ID per salvataggio cloud sicuro
+    // Auto-correzione ID
     let changed = false;
     foods = foods.map(f => {
       if (!isNaN(f.id) && parseInt(f.id) >= 1 && parseInt(f.id) <= 40) {
